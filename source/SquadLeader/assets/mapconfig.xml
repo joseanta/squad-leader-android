@@ -27,10 +27,10 @@
     map as a basemap layer, but it will not render unless the map is not moving.
     -->
     <layers>
-        <!--layer name="Topographic" visible="true" type="TiledCacheLayer" basemap="true">
-            <datasetpath>file:///mnt/sdcard/path/to/tilepack.tpk</datasetpath>
-        </layer-->
-        <layer name="Imagery" visible="false" type="TiledMapServiceLayer" basemap="true">
+        <layer name="Topographic" visible="true" type="TiledCacheLayer" basemap="true">
+            <datasetpath>file:///mnt/sdcard/SquadLeader/data/Topographic.tpk</datasetpath>
+        </layer>
+        <!--<layer name="Imagery" visible="false" type="TiledMapServiceLayer" basemap="true">
             <url>http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer</url>
         </layer>
         <layer name="Streets" visible="false" type="TiledMapServiceLayer" basemap="true">
