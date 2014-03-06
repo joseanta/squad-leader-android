@@ -26,6 +26,7 @@ import java.io.ObjectOutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -60,6 +61,7 @@ import com.esri.core.map.Graphic;
 import com.esri.militaryapps.controller.LocationController.LocationMode;
 import com.esri.militaryapps.model.BasemapLayerInfo;
 import com.esri.militaryapps.model.LayerInfo;
+import com.esri.militaryapps.model.LayerType;
 import com.esri.militaryapps.model.MapConfig;
 import com.esri.militaryapps.model.MapConfigReader;
 import com.esri.squadleader.R;
@@ -185,9 +187,17 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
         FileInputStream serializedMapConfigStream = null;
         if (useExistingPreferences) {
             try {
-                serializedMapConfigStream = context.openFileInput(context.getString(R.string.map_config_prefname));
+            	String nombreFichero= context.getString(R.string.map_config_prefname);
+                    serializedMapConfigStream = context.openFileInput(nombreFichero);
+                //serializedMapConfigStream = context.openFileInput(context.getString(R.string.map_config_prefname));
             } catch (FileNotFoundException e) {
                 //Swallow
+            	/*File mapConfigFile = new File(context.getString(R.string.squad_leader_home_dir),context.getString(R.string.map_config_filename));
+            	try{
+            	serializedMapConfigStream = new FileInputStream(mapConfigFile);
+                } catch (FileNotFoundException e2) {
+                    //Swallow and let it load built-in mapconfig.xml
+                }*/            	
             }
         }
         if (null != serializedMapConfigStream) {
@@ -234,6 +244,30 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Couldn't read MapConfig", e);
+                
+                mapConfig = new MapConfig();
+                
+                //LayerInfo layer = new LayerInfo(); 
+                String currentLayerThumbnail = "ic_basemap_normal";
+                
+                LayerInfo layer = new BasemapLayerInfo(currentLayerThumbnail);                
+                layer.setDatasetPath("/storage/sdcard0/SquadLeader/data/Topographic.tpk");
+                layer.setLayerType(LayerType.TILED_CACHE);
+                layer.setName("Topografico");
+                layer.setVisible(true);
+                
+                BasemapLayerInfo[] basemapLayers = new BasemapLayerInfo[1];
+                basemapLayers[0]=(BasemapLayerInfo) layer;
+                mapConfig.setBasemapLayers(basemapLayers);	
+                //List<BasemapLayerInfo> basemaps = new ArrayList<BasemapLayerInfo>();
+                //basemaps.add((BasemapLayerInfo) layer);
+                //mapConfig.setBasemapLayers(basemaps.toArray());
+                
+                mapConfig.setScale(288895.277144);
+                mapConfig.setCenterX(7842690);
+                mapConfig.setCenterY(4086500);
+                mapConfig.setRotation(0);          
+                
             }
         }
         if (null != mapConfig) {
@@ -255,7 +289,7 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
             if (0 != mapConfig.getScale()) {
                 zoomToScale(mapConfig.getScale(), mapConfig.getCenterX(), mapConfig.getCenterY());
             }
-        }
+        }            
         
         addLayer(locationGraphicsLayer, true);
     }
