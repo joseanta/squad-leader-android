@@ -51,6 +51,7 @@ import com.esri.android.map.MapView;
 import com.esri.android.map.event.OnPanListener;
 import com.esri.android.map.event.OnSingleTapListener;
 import com.esri.core.geometry.AngularUnit;
+import com.esri.core.geometry.CoordinateConversion;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.SpatialReference;
 import com.esri.militaryapps.controller.ChemLightController;
@@ -73,12 +74,16 @@ import com.esri.squadleader.view.AddLayerFromWebDialogFragment.AddLayerListener;
 import com.esri.squadleader.view.GoToMgrsDialogFragment.GoToMgrsHelper;
 import com.ipaulpro.afilechooser.utils.FileUtils;
 
+import com.esri.squadleader.view.DimensionPantallaDialogFragment.DimensionPantallaHelper;;
+
+
+
 /**
  * The main activity for the Squad Leader application. Typically this displays a map with various other
  * controls.
  */
 public class SquadLeaderActivity extends ActionBarActivity
-        implements AddLayerListener, GoToMgrsHelper {
+        implements AddLayerListener, GoToMgrsHelper, DimensionPantallaHelper {
     
     private static final String TAG = SquadLeaderActivity.class.getSimpleName();
     private static final double MILLISECONDS_PER_HOUR = 1000 * 60 * 60;
@@ -103,15 +108,29 @@ public class SquadLeaderActivity extends ActionBarActivity
         private final SpatialReference SR = SpatialReference.create(4326);
         
         private Location previousLocation = null;
+        private CoordinateConversion	conversionCoordenadas = new CoordinateConversion();
+       	private SpatialReference spt = SpatialReference.create(SpatialReference.WKID_WGS84);
         
         @Override
         public void handleMessage(Message msg) {
             if (null != msg) {
                 Location location = (Location) msg.obj;
+                mapController.rumbo = (float) location.getHeading();
                 try {
                     TextView locationView = (TextView) findViewById(R.id.textView_displayLocation);
-                    String mgrs = mapController.pointToMgrs(new Point(location.getLongitude(), location.getLatitude()), SR);
-                    locationView.setText(getString(R.string.display_location) + mgrs);
+                    // 1 - MGRS	2 - GEO		3 - UTM
+                    
+                    String txtLocation = "Posicion";
+                    if (modoCoordenadas == 1){
+                    	txtLocation = mapController.pointToMgrs(new Point(location.getLongitude(), location.getLatitude()), SR);
+                    	locationView.setText(getString(R.string.display_location) + txtLocation);
+                    }else if (modoCoordenadas == 2){
+                    	txtLocation = "Long: " + Double.toString(location.getLongitude()) + " Lat: " + Double.toString(location.getLatitude());
+                    	locationView.setText(txtLocation);
+                    }else{
+                     	txtLocation = "UTM: " + conversionCoordenadas.pointToUtm(new Point(location.getLongitude(),location.getLatitude()), spt, CoordinateConversion.UTMConversionMode.NORTH_SOUTH_LATITUDE_INDICATORS, true);
+                    	locationView.setText(txtLocation);
+                    }
                 } catch (Throwable t) {
                     Log.i(TAG, "Couldn't set location text", t);
                 }
@@ -218,6 +237,7 @@ public class SquadLeaderActivity extends ActionBarActivity
     private PositionReportController positionReportController;
     private AddLayerFromWebDialogFragment addLayerFromWebDialogFragment = null;
     private GoToMgrsDialogFragment goToMgrsDialogFragment = null;
+    private DimensionPantallaDialogFragment dimensionPantallaDialogFragment = null;
     private boolean wasFollowMeBeforeMgrs = false;
     private final Timer clockTimer = new Timer(true);
     private TimerTask clockTimerTask = null;
@@ -229,6 +249,9 @@ public class SquadLeaderActivity extends ActionBarActivity
     private String vehicleTypePreference = "Dismounted";
     private String uniqueIdPreference = UUID.randomUUID().toString();
     private String sicPreference = "SFGPEWRR-------";
+    private Boolean consultarCoordenadasActivo = false;
+    
+    public int modoCoordenadas = 1;   // 1 - MGRS	2 - GEO		3 - UTM 
     
     public SquadLeaderActivity() throws SocketException {
         super();
@@ -412,7 +435,23 @@ public class SquadLeaderActivity extends ActionBarActivity
         clockTimer.schedule(clockTimerTask, 0, Utilities.ANIMATION_PERIOD_MS);
         
         ((RadioGroup) findViewById(R.id.radioGroup_chemLightButtons)).setOnCheckedChangeListener(chemLightCheckedChangeListener);
+        
+        // Para cuando se de al rectangulo cambie el modo de ver coordenadas
+        View displayView = findViewById(R.id.tableLayout_display);
+        displayView.setOnClickListener(new View.OnClickListener() {			
+			@Override
+			public void onClick(View v) {
+				  // 1 - MGRS	2 - GEO		3 - UTM 
+				modoCoordenadas++;
+				modoCoordenadas = (modoCoordenadas >3 ? 1 : modoCoordenadas);
+			}
+		});
+
     }
+    ///////////   FIN    ONCREATE  /////////////
+    ////////////////////////////////////////////
+    ////////////////////////////////////////////
+    ////////////////////////////////////////////
     
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -523,6 +562,60 @@ public class SquadLeaderActivity extends ActionBarActivity
                 }
                 goToMgrsDialogFragment.show(getSupportFragmentManager(), getString(R.string.go_to_mgrs_fragment_tag));
                 return true;
+            case R.id.dimension_pantalla:
+            	// establecer tamaño zoom en pantalla
+                if (null == dimensionPantallaDialogFragment) {
+                	dimensionPantallaDialogFragment = new DimensionPantallaDialogFragment();
+                }
+                dimensionPantallaDialogFragment.show(getSupportFragmentManager(), getString(R.string.dimension_pantalla_fragment_tag));            	
+            	return true;
+            case R.id.consultar_coordenada:
+            	// consultar Coordenadas pinchando en el mapa
+                final AlertDialog.Builder builderPto = new AlertDialog.Builder(this);
+                if (consultarCoordenadasActivo){
+                    mapController.setOnSingleTapListener(null);
+                    consultarCoordenadasActivo =false;
+                }else{
+                    consultarCoordenadasActivo =true;              
+	                mapController.setOnSingleTapListener(new OnSingleTapListener() {                    
+	                    @Override
+	                    public void onSingleTap(final float x, final float y) {
+	                    	Point point = mapController.toMapPointObject((int) x, (int) y);                    	
+	                		Log.d("single tap on screen:", "[" + x + "," + y + "]");
+	                		Log.d("single tap on map:", "[" + point.getX() + "," + point.getY() + "]");
+	                		Point geo, wm, utm;
+	                		String mostrarCoordenadas = "-";
+	                        CoordinateConversion	conversionCoordenadas = new CoordinateConversion();
+	                        SpatialReference spt = SpatialReference.create(SpatialReference.WKID_WGS84);        
+	                        SpatialReference sptWM = SpatialReference.create(3857);// Web Mercator (3857)  
+	                        if (mapController.getSpatialReference().isWGS84()){//geo
+	                			geo = new Point(point.getX(), point.getY());
+	                			String coordUtm =conversionCoordenadas.pointToUtm(geo, spt, CoordinateConversion.UTMConversionMode.NORTH_SOUTH_LATITUDE_INDICATORS, true);
+	                			mostrarCoordenadas = "GEOGRAFICAS WGS84:\nLat = " + Double.toString(point.getY())+  "   Long = " + Double.toString(point.getX());
+	                			mostrarCoordenadas += "\nMGRS:\n" + conversionCoordenadas.pointToMgrs(geo, spt, CoordinateConversion.MGRSConversionMode.NEW_180_IN_ZONE1, 0, true, true);
+	                			mostrarCoordenadas += "\nUTM WGS84:\n" + coordUtm;
+	                 		}else if (mapController.getSpatialReference().isAnyWebMercator()){//wm 
+	                 			wm = new Point(point.getX(), point.getY()); 
+	                 			String coordGeo = conversionCoordenadas.pointToDecimalDegrees(wm, sptWM, 6);
+	                 			mostrarCoordenadas = "GEOGRAFICAS WGS84:\n" + coordGeo;
+	                			mostrarCoordenadas += "\nUTM WGS84\n" + "-";                 			
+	                 		}else{//utm
+	                 			utm = new Point(point.getX(), point.getY());                 			
+	                 			/*String coordGeo = conversionCoordenadas.utmToPoint(txtUTM, spt, CoordinateConversion.UTMConversionMode.NORTH_SOUTH_LATITUDE_INDICATORS, true);
+	                 			mostrarCoordenadas = "GEOGRAFICAS WGS84:\n" + coordGeo;*/
+	                			mostrarCoordenadas = "";
+	                			mostrarCoordenadas += "\nUTM WGS84\nX = " + Double.toString(point.getX())+  "   Y = " + Double.toString(point.getY());
+	                	                 		}
+	                        builderPto.setTitle("COORDENADAS");
+	                        builderPto.setMessage(mostrarCoordenadas);
+	                        builderPto.setCancelable(true);
+	                        builderPto.create();
+	                        builderPto.show();	 
+	                        
+	                    }
+	                });
+                }
+            	return true;
             case R.id.set_location_mode:
                 //Present Set Location Mode dialog
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);

@@ -28,8 +28,9 @@
     -->
     <layers>
         <layer name="Topographic" visible="true" type="TiledCacheLayer" basemap="true">
-            <!-- Para la Tablet -->
-            <datasetpath>file:///mnt/sdcard/SquadLeader/data/Topographic.tpk</datasetpath>
+            <!-- Para la Tablet 
+            <datasetpath>file:///mnt/sdcard/SquadLeader/data/Topographic.tpk</datasetpath> -->
+            <datasetpath>file:///mnt/sdcard/SquadLeader/data/Escenario2_ORTO5k.tpk</datasetpath>
             <!-- Para el Phone -->
             <!-- <datasetpath>/storage/sdcard0/SquadLeader/data/Topographic.tpk</datasetpath>  -->
             </layer>
@@ -72,13 +73,21 @@
     </layers>
     <initialextent>
         <anchor>
+            <x>-3.722</x>
+            <y>40.428</y>
+        </anchor>
+        <scale>50000</scale>
+        <rotation>0</rotation>
+    </initialextent>
+    <!--<initialextent>
+        <anchor>
             <x>7842690</x>
             <y>4086500</y>
         </anchor>
         <scale>288895.277144</scale>
         <rotation>0</rotation>
     </initialextent>
-    <!--viewshed>
+    viewshed>
         <servicepath>\data\FastVisibilityByDistance.gpk</servicepath>
         <taskname>Fast Visibility By Distance</taskname>
         <observerheight>2.0</observerheight>

@@ -26,19 +26,22 @@ import java.io.ObjectOutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+//import java.util.HashMap;
 import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
 
+//import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+//import android.widget.Toast;
 
 import com.esri.android.map.GraphicsLayer;
 import com.esri.android.map.Grid.GridType;
@@ -54,10 +57,19 @@ import com.esri.android.map.event.OnSingleTapListener;
 import com.esri.android.map.event.OnStatusChangedListener;
 import com.esri.core.geometry.CoordinateConversion;
 import com.esri.core.geometry.CoordinateConversion.MGRSConversionMode;
+import com.esri.core.geometry.Envelope;
+import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
+import com.esri.core.geometry.MultiPath;
+import com.esri.core.geometry.Polyline;
+//import com.esri.core.geometry.MultiPath;
 import com.esri.core.geometry.Point;
+//import com.esri.core.geometry.Polygon;
+//import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
 import com.esri.core.map.Graphic;
+import com.esri.core.symbol.SimpleLineSymbol;
+//import com.esri.core.symbol.Symbol;
 import com.esri.militaryapps.controller.LocationController.LocationMode;
 import com.esri.militaryapps.model.BasemapLayerInfo;
 import com.esri.militaryapps.model.LayerInfo;
@@ -124,6 +136,11 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
     private boolean autoPan = false;
     private int locationGraphicId = -1;
     private Point lastLocation = null;
+    public  float  rumbo = 0;
+    public boolean dibujarDimensionPantalla = false;
+	private double dimensionLong = 1000;
+	private double dimensionLat = 1000;
+	private GraphicsLayer dimensionGraphicsLayer = new GraphicsLayer();
 
     /**
      * Creates a new MapController.
@@ -251,11 +268,16 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
                 String currentLayerThumbnail = "ic_basemap_normal";
                 
                 LayerInfo layer = new BasemapLayerInfo(currentLayerThumbnail);                
-                layer.setDatasetPath("/storage/sdcard0/SquadLeader/data/Topographic.tpk");
+                //layer.setDatasetPath("/storage/sdcard0/SquadLeader/data/Topographic.tpk");
+                //Para el Phone:
+                //layer.setDatasetPath("/storage/sdcard0/SquadLeader/data/Escenario2_ORTO5k.tpk");
+                //Para la Tablet
+                layer.setDatasetPath("file:///mnt/sdcard/SquadLeader/data/Escenario2_ORTO5k.tpk");
                 layer.setLayerType(LayerType.TILED_CACHE);
                 layer.setName("Topografico");
                 layer.setVisible(true);
-                
+
+                	
                 BasemapLayerInfo[] basemapLayers = new BasemapLayerInfo[1];
                 basemapLayers[0]=(BasemapLayerInfo) layer;
                 mapConfig.setBasemapLayers(basemapLayers);	
@@ -263,9 +285,12 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
                 //basemaps.add((BasemapLayerInfo) layer);
                 //mapConfig.setBasemapLayers(basemaps.toArray());
                 
-                mapConfig.setScale(288895.277144);
-                mapConfig.setCenterX(7842690);
-                mapConfig.setCenterY(4086500);
+                //mapConfig.setScale(288895.277144);
+                //mapConfig.setCenterX(7842690);
+                //mapConfig.setCenterY(4086500);
+                mapConfig.setScale(50000);
+                mapConfig.setCenterX(-3.722);
+                mapConfig.setCenterY(40.428);
                 mapConfig.setRotation(0);          
                 
             }
@@ -292,6 +317,7 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
         }            
         
         addLayer(locationGraphicsLayer, true);
+        addLayer(dimensionGraphicsLayer,true);
     }
     
     /**
@@ -555,30 +581,129 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
         panTo(new Point(centerX, centerY));
     }
     
-    public void panTo(Point newCenter) {
+    private void BorrarDimensionPantalla(){
+    	dimensionGraphicsLayer.removeAll();
+    }
+    private void DibujarDimensionPantalla(Point newCenter){
+    	// cuadrado
+    	/*Geometry pantalla = new Envelope(newCenter, dimensionLong, dimensionLat);
+		dimensionGraphicsLayer.addGraphic(new Graphic(pantalla,new SimpleLineSymbol(Color.RED,2)));*/
+		
+		//pseudocirculo
+		MultiPath poly = new Polyline();
+		double xi,yi,x,y;
+		double rumboRad =  (rumbo * Math.PI / 180.0);
+		double incrRad =  (15 * Math.PI / 180.0);
+		xi= newCenter.getX() + ( dimensionLat/2.0 * Math.sin(rumboRad));
+		yi= newCenter.getY() + ( dimensionLat/2.0 * Math.cos(rumboRad));
+		poly.startPath(xi, yi);
+		for (double angulo = rumboRad+incrRad; angulo < rumboRad+(2*Math.PI); angulo=angulo+incrRad){
+			x= newCenter.getX() + ( dimensionLat/2.0 * Math.sin(angulo));
+			y= newCenter.getY() + ( dimensionLat/2.0 * Math.cos(angulo));
+			poly.lineTo(x, y);
+		}
+		poly.lineTo(xi, yi);
+		dimensionGraphicsLayer.addGraphic(new Graphic(poly,new SimpleLineSymbol(Color.RED,2)));
+		
+    }
+	public void panTo(Point newCenter) {
         mapView.centerAt(newCenter, true);
+        setRotation(rumbo);
+        if (dibujarDimensionPantalla){
+        	BorrarDimensionPantalla();
+        	DibujarDimensionPantalla(newCenter);
+        }
     }
 
+	public void DibujarDimension(boolean dibujar){
+		dibujarDimensionPantalla = dibujar;
+		BorrarDimensionPantalla();
+	}
+    public Point panToDimension(String dimension){
+    	//Point ptoCentro = mapView.getMapBoundaryExtent().getCenter();
+    	Point ptoCentro = mapView.getCenter();
+        double  R = 6378137.0;//WGS84
+    	try{
+    		dimensionLong = Double.parseDouble(dimension);
+    		dimensionLat = Double.parseDouble(dimension);
+    		if (mapView.getSpatialReference().isWGS84()){
+    			dimensionLat = (dimensionLat * 360.0) / (2.0 * Math.PI * R);
+    		    double radioP = R * Math.cos((ptoCentro.getY() * 2.0 * Math.PI)/360.0);    		    
+    			dimensionLong = (dimensionLong * 360.0) / (2.0 * Math.PI * radioP);
+    		}
+    			
+            Geometry pantalla = new Envelope(ptoCentro, dimensionLong, dimensionLat);
+            mapView.setExtent(pantalla);
+            DibujarDimension(true);
+            Log.w(TAG, "Zoom Dimensión Pantalla Xmin= " + Double.toString(ptoCentro.getX()) + "   dimension long= " + Double.toString(dimensionLong) );
+            Log.w(TAG, "Zoom Dimensión Pantalla Ymin= " + Double.toString(ptoCentro.getY()) + "   dimension lat= " + Double.toString(dimensionLat) );
+    		return ptoCentro;
+
+    	}catch(Exception e){
+    		return null;
+    	}    	
+    	
+    }
     /**
      * Pans the map to a new center point, if a valid MGRS string is provided.
      * @param newCenterMgrs the map's new center point, as an MGRS string.
      * @return if the string was valid, the point to which the map was panned; null otherwise
      */
-    public Point panTo(String newCenterMgrs) {
-        newCenterMgrs = Utilities.convertToValidMgrs(newCenterMgrs,
-                pointToMgrs(mapView.getMapBoundaryExtent().getCenter()));
-        if (null != newCenterMgrs) {
-            Point pt = mgrsToPoint(newCenterMgrs);
-            if (null != pt) {
-                panTo(pt);
-                return pt;
-            } else {
-                Log.w(TAG, "MGRS string " + newCenterMgrs + " could not be converted to a point");
-                return null;
-            }
-        } else {
-            return null;
-        }
+    public Point panTo(String newCenterMgrs,int modocoordenadas) {
+    	// Tenemos que ver si es MGRS, GEO   o   UTM
+        CoordinateConversion	conversionCoordenadas = new CoordinateConversion();
+        SpatialReference spt = SpatialReference.create(SpatialReference.WKID_WGS84);        
+        SpatialReference sptWM = SpatialReference.create(3857);// Web Mercator (3857)  
+        Point pt;
+    	
+    	if (modocoordenadas==1){ // MGRS
+	        newCenterMgrs = Utilities.convertToValidMgrs(newCenterMgrs, pointToMgrs(mapView.getMapBoundaryExtent().getCenter()));
+	        if (null != newCenterMgrs) {
+	            pt = mgrsToPoint(newCenterMgrs);
+	            if (null != pt) {
+	                panTo(pt);
+	                return pt;
+	            } else {
+	                Log.w(TAG, "MGRS string " + newCenterMgrs + " could not be converted to a point");
+	                return null;
+	            }
+	        } else {
+	            return null;
+	        }  		
+    	}else if (modocoordenadas==2){ // GEO
+    		String[] bloques = newCenterMgrs.split(" ");
+    		if (mapView.getSpatialReference().isWGS84()){//geo
+    			panTo( Double.parseDouble(bloques[1]), Double.parseDouble(bloques[0]) );
+    			return ( new Point(Double.parseDouble(bloques[0]), Double.parseDouble(bloques[1])) );
+    		}else if (mapView.getSpatialReference().isAnyWebMercator()){//wm
+    		    pt = conversionCoordenadas.decimalDegreesToPoint(newCenterMgrs,sptWM );
+     			panTo( pt.getX(), pt.getY() ); 	
+     			return pt;
+    		}else{//utm
+    			String coordUtm =conversionCoordenadas.pointToUtm(new Point(Double.parseDouble(bloques[0]), Double.parseDouble(bloques[1])), spt, CoordinateConversion.UTMConversionMode.NORTH_SOUTH_LATITUDE_INDICATORS, true);
+    			String[] bloques2 = coordUtm.split(" ");
+    			panTo( Double.parseDouble(bloques2[1]), Double.parseDouble(bloques2[2]) );
+    			return ( new Point( Double.parseDouble(bloques2[1]), Double.parseDouble(bloques2[2]) ) );
+    		}
+    	}else if (modocoordenadas==3){ // UTM
+    		String[] bloques = newCenterMgrs.split(" ");
+    		if (mapView.getSpatialReference().isWGS84()){//geo
+    			pt =conversionCoordenadas.utmToPoint(newCenterMgrs, spt, CoordinateConversion.UTMConversionMode.NORTH_SOUTH_LATITUDE_INDICATORS);    			
+    			panTo( pt.getX(), pt.getY() );
+    			return pt;
+    		}else if (mapView.getSpatialReference().isAnyWebMercator()){//wm
+    			Point coordGeo =conversionCoordenadas.utmToPoint(newCenterMgrs, spt, CoordinateConversion.UTMConversionMode.NORTH_SOUTH_LATITUDE_INDICATORS);    			
+    		    pt = conversionCoordenadas.decimalDegreesToPoint(String.format("%d %d", coordGeo.getX(), coordGeo.getY()),sptWM );
+     			panTo( pt.getX(), pt.getY() ); 
+     			return pt;
+    		}else{//utm
+    			panTo( Double.parseDouble(bloques[1]), Double.parseDouble(bloques[2]) );
+    			return ( new Point( Double.parseDouble(bloques[1]), Double.parseDouble(bloques[2]) ) );
+    		}
+    		
+    	}
+    	return null;
+    	
     }
     
     /**
@@ -604,6 +729,8 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
 
     @Override
     public void setGridVisible(boolean visible) {
+    	if (visible)
+    		mapView.getGrid().setType(GridType.MGRS);
         mapView.getGrid().setVisibility(visible);
     }
 
@@ -780,6 +907,7 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
         this.autoPan = autoPan;
         if (null != mapView.getLocationService()) {
             mapView.getLocationService().setAutoPan(autoPan);
+            
         }
     }
 

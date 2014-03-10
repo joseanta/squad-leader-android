@@ -9,6 +9,14 @@
         android:icon="@drawable/ic_action_place"
         android:title="@string/go_to_mgrs"
         squadleader:showAsAction="ifRoom" />
+    <item android:id="@+id/dimension_pantalla"
+        android:icon="@drawable/ic_menu_crop"
+        android:title="@string/dimension_pantalla"
+        squadleader:showAsAction="ifRoom" />
+    <item android:id="@+id/consultar_coordenada"
+        android:icon="@drawable/ic_menu_myplaces"
+        android:title="@string/consultar_coordenadas"
+        squadleader:showAsAction="ifRoom" />
     <item android:id="@+id/set_location_mode" android:title="@string/set_location_mode" />
     <item android:id="@+id/settings" android:title="@string/settings" />
 </menu>

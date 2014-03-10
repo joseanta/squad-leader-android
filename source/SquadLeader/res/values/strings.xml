@@ -21,9 +21,12 @@
     <string name="use_as_basemap">Use as Basemap</string>
     <string name="create_spot_report">Create Spot Report</string>
     <string name="toggle_grid">Toggle Grid</string>
-    <string name="go_to_mgrs">Go to MGRS Location</string>
+    <string name="go_to_mgrs">Ir al Punto</string>
+    <string name="dimension_pantalla">Dimension de la Pantalla</string>
     <string name="go_to_mgrs_fragment_tag">GoToMgrsFragment</string>
-    <string name="mgrs">MGRS</string>
+    <string name="dimension_pantalla_fragment_tag">DimensionPantallaFragment</string>
+    <string name="mgrs">Introducir dato</string>
+    <string name="consultar_coordenadas">Consultar Coordenadas</string>
     <string name="north_arrow_desc">North Arrow (click to rotate map to north up)</string>
     <string name="cert_error_dialog_title">Accept Invalid Certificate?</string>
     <string name="accept">Accept</string>
@@ -34,7 +37,7 @@
     <string name="option_simulation_builtin">Simulation (Built-in)</string>
     <string name="option_simulation_file">Simulation (GPX File)</string>
     <string name="chooser_label">File Chooser</string>
-    <string name="display_location">Location:&#160;</string>
+    <string name="display_location">Pos:&#160;</string>
     <string name="display_speed">Speed:&#160;</string>
     <string name="display_heading">Heading:&#160;</string>
     <string name="display_time">Time:&#160;</string>

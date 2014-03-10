@@ -26,8 +26,9 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.Toast;
 import android.widget.RadioGroup.OnCheckedChangeListener;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.esri.squadleader.R;
 import com.esri.squadleader.controller.MapController;
@@ -35,12 +36,12 @@ import com.esri.squadleader.controller.MapController;
 /**
  * A dialog for letting the user input an MGRS location and navigating to it.
  */
-public class GoToMgrsDialogFragment extends DialogFragment {
+public class DimensionPantallaDialogFragment extends DialogFragment {
     
     /**
      * A listener for this class to pass objects back to the Activity that called it.
      */
-    public interface GoToMgrsHelper {
+    public interface DimensionPantallaHelper {
         
         /**
          * Gives GoToMgrsDialogFragment a pointer to the MapController.
@@ -63,13 +64,13 @@ public class GoToMgrsDialogFragment extends DialogFragment {
         void onPanToMgrsError(String mgrs);
     }
     
-    private GoToMgrsHelper listener = null;
+    private DimensionPantallaHelper listener = null;
     
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        if (activity instanceof GoToMgrsHelper) {
-            listener = (GoToMgrsHelper) activity;
+        if (activity instanceof DimensionPantallaHelper) {
+            listener = (DimensionPantallaHelper) activity;
         }
     }
     
@@ -80,32 +81,51 @@ public class GoToMgrsDialogFragment extends DialogFragment {
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             final View inflatedView = inflater.inflate(R.layout.go_to_mgrs, null);
             builder.setView(inflatedView);
-            builder.setTitle(getString(R.string.go_to_mgrs));
+            builder.setTitle(getString(R.string.dimension_pantalla));
             
+            final RadioGroup rg = (RadioGroup)inflatedView.findViewById(R.id.radioGroup1);
+            //rg.setVisibility(View.INVISIBLE);
             final RadioButton rb1= (RadioButton)inflatedView.findViewById(R.id.radioButton1);
             final RadioButton rb2= (RadioButton)inflatedView.findViewById(R.id.radioButton2);
             final RadioButton rb3= (RadioButton)inflatedView.findViewById(R.id.radioButton3);
-            rb1.setChecked(true);
-            builder.setNegativeButton(R.string.cancel, null);
+            TextView txt = (TextView)inflatedView.findViewById(R.id.textView_mgrsLabel);
+            rb1.setText("Rifle");
+            rb2.setText("Morter");
+            rb3.setText("Artillery");
+            txt.setText("Introducir Tamaño de la Ventana de Visión");
+            final EditText etxt = (EditText)inflatedView.findViewById(R.id.editText_mgrs);
             
-            builder.setPositiveButton(R.string.go_to_mgrs, new DialogInterface.OnClickListener() {
+            rg.setOnCheckedChangeListener(new OnCheckedChangeListener() 
+            {
+            	public void onCheckedChanged(RadioGroup group, int checkedId) 
+                {
+                 // TODO Auto-generated method stub
+            		if(rb1.isChecked())
+            			etxt.setText("800");
+            		if(rb2.isChecked())
+            			etxt.setText("2000");
+            		if(rb3.isChecked())
+            			etxt.setText("15000");           		
+                }
+            });
+            
+            builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener(){
+            	public void onClick(DialogInterface diolog, int which) {
+            		listener.getMapController().DibujarDimension(false);
+            	}
+            });
+            
+            builder.setPositiveButton(R.string.dimension_pantalla, new DialogInterface.OnClickListener() {
                 
                 public void onClick(DialogInterface dialog, int which) {
                     View view = inflatedView.findViewById(R.id.editText_mgrs);
                     if (null != view && view instanceof EditText) {
                         String mgrs = ((EditText) view).getText().toString();
                         if (null != mgrs) {
-                            listener.beforePanToMgrs(mgrs);
-                            int modoCoordenadas = 1; // 1 - MGRS     2 - GEO     3 - UTM
-                            if(rb1.isChecked())
-                           		if(rb1.isChecked())
-                        			modoCoordenadas = 1;
-                        		if(rb2.isChecked())
-                        			modoCoordenadas = 2;
-                        		if(rb3.isChecked())
-                        			modoCoordenadas = 3;         		
-                            if (null == listener.getMapController().panTo(mgrs, modoCoordenadas)) {
-                                Toast.makeText(getActivity(), "Invalid MGRS string: " + mgrs, Toast.LENGTH_LONG).show();
+                            //listener.beforePanToMgrs(mgrs);
+                            //if (null == listener.getMapController().panTo(mgrs)) {
+                            if (null == listener.getMapController().panToDimension(mgrs)) { 
+                                Toast.makeText(getActivity(), "Dimensión Invalida: " + mgrs, Toast.LENGTH_LONG).show();
                                 listener.onPanToMgrsError(mgrs);
                             }
                         }
