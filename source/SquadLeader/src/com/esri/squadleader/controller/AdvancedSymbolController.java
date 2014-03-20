@@ -18,10 +18,13 @@ package com.esri.squadleader.controller;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.StringTokenizer;
+import java.util.UUID;
 
 import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
@@ -39,9 +42,13 @@ import com.esri.core.symbol.Symbol;
 import com.esri.core.symbol.advanced.Message;
 import com.esri.core.symbol.advanced.MessageGroupLayer;
 import com.esri.core.symbol.advanced.MessageHelper;
+import com.esri.core.symbol.advanced.MessageProcessor;
 import com.esri.core.symbol.advanced.SymbolDictionary;
+import com.esri.core.symbol.advanced.SymbolDictionary.DictionaryType;
 import com.esri.militaryapps.model.Geomessage;
 import com.esri.squadleader.util.Utilities;
+
+import com.esri.core.symbol.advanced.SymbolProperties;
 
 /**
  * A controller for ArcGIS Runtime advanced symbology. Use this class when you want to use
@@ -54,12 +61,16 @@ public class AdvancedSymbolController {
 
     private final MapController mapController;
     private final MessageGroupLayer groupLayer;
-    private final GraphicsLayer spotReportLayer;
+    public final GraphicsLayer spotReportLayer;
     private final String[] messageTypesSupportedSorted;
     private final HashSet<String> highlightedIds = new HashSet<String>();
     private final HashMap<String, Integer> spotReportIdToGraphicId = new HashMap<String, Integer>();
     private final Symbol spotReportSymbol;
 
+	/* aqui */
+    public final MessageGroupLayer groupLayer2;
+    public final MessageProcessor processor;
+    public final SymbolDictionary symbolDictionary;
     /**
      * Creates a new AdvancedSymbolController.
      * @param mapController the application's MapController.
@@ -87,15 +98,30 @@ public class AdvancedSymbolController {
         }
         
         spotReportLayer = new GraphicsLayer();
+        spotReportLayer.setName("spotReportLayer");
         mapController.addLayer(spotReportLayer);
         
         groupLayer = new MessageGroupLayer(SymbolDictionary.DictionaryType.MIL2525C, symDictDir.getAbsolutePath());
+        groupLayer.setName("GroupLayerDictionary");
         mapController.addLayer(groupLayer);
         
         messageTypesSupportedSorted = groupLayer.getMessageProcessor().getMessageTypesSupported();
         Arrays.sort(messageTypesSupportedSorted);
         
         spotReportSymbol = new PictureMarkerSymbol(spotReportIcon);
+
+    	/* aqui */
+        //Tablet
+        //groupLayer2 = new MessageGroupLayer(DictionaryType.MIL2525C,2);
+        //Phone y Tablet
+        groupLayer2 = new MessageGroupLayer(DictionaryType.MIL2525C, symDictDir.getAbsolutePath());
+        groupLayer2.setName("myGroupLayerDictionary");
+        mapController.addLayer(groupLayer2);
+        processor = groupLayer2.getMessageProcessor();
+        //Tablet
+        //symbolDictionary = new SymbolDictionary(DictionaryType.MIL2525C);
+        //Phone y Tablet
+        symbolDictionary = new SymbolDictionary(DictionaryType.MIL2525C,symDictDir.getAbsolutePath());
     }
     
     /**
@@ -124,6 +150,41 @@ public class AdvancedSymbolController {
                             Graphic graphic = new Graphic(pt, spotReportSymbol, geomessage.getProperties());
                             graphicId = spotReportLayer.addGraphic(graphic);
                             spotReportIdToGraphicId.put(geomessage.getId(), graphicId);
+                            
+                        	/* aqui */
+                           /* Message message = groupLayer.getMessageProcessor().createMessageFrom(graphic);//new Message();
+                            message.setID(geomessage.getId());
+                            //message.setProperties(geomessage.getProperties());
+                            message.setProperty("sic", "SFGPEVC--------");
+                            //message.setProperty("x", ((Point)pt).getX());
+                            //message.setProperty("y", ((Point)pt).getY());
+                            groupLayer.getMessageProcessor().processMessage(message);*/
+                        	/* aqui */
+                            
+                        	/* aqui */
+                            try {
+	                            String sic = (String)geomessage.getProperty("sic");
+	                            String equip_cat = (String) geomessage.getProperty("equip_cat");
+	                            if (sic == null || sic.length()!=15){
+	                            	if (equip_cat !=null)
+	                            		sic = getSic(equip_cat);
+	                            	else
+	                            		sic = "SFGPEWRR-------";
+	                            }                            
+	                            
+	                    		ArrayList<Point> controlPoints = new ArrayList<Point>(1);
+	                    		controlPoints.add((Point)pt);
+	                    		HashMap<String, Object> properties = new HashMap<String, Object>();
+	                    		//properties.put("sic", "SFGPEWRR-------");
+	                    		properties.put("sic", sic);
+	                    		properties.put("equicat", equip_cat);
+	                    		Message msg1 = MessageHelper.create2525CUpdateMessage(UUID.randomUUID().toString(), "position_report", controlPoints, properties);
+	                            
+	                    		processor.processMessage(msg1);
+                            } catch (IOException ex) {
+                                
+                            }
+                            
                         }
                     } catch (NumberFormatException nfe) {
                         Log.e(TAG, "Could not parse spot report", nfe);
@@ -241,5 +302,25 @@ public class AdvancedSymbolController {
             }
         }
     }
+
+    public String getSic(String symbolName) throws IOException {
+        List<SymbolProperties> symbols = findSymbols(symbolName);
+        String respuesta =null;
+        for (SymbolProperties sym : symbols) {
+            if (sym.getName().equalsIgnoreCase(symbolName)) {
+                respuesta = sym.getValues().get("SymbolID");
+            }
+        }
+        return respuesta;
+    }
     
+    public List<SymbolProperties> findSymbols(String searchString) throws IOException {
+        ArrayList<String> keywords = new ArrayList<String>();
+        StringTokenizer tok = new StringTokenizer(searchString, Utilities.MIL_2525C_WHITESPACE_CHARS);
+        while (tok.hasMoreTokens()) {
+            keywords.add(tok.nextToken());
+        }
+        return symbolDictionary.findSymbols(keywords);
+    }
+
 }

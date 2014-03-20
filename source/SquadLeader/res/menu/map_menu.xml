@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:squadleader="http://schemas.android.com/apk/res-auto">
-    <item android:id="@+id/add_layer_from_web"
-        android:icon="@drawable/ic_add_content"
-        android:title="@string/add_layer_from_web"
-        squadleader:showAsAction="ifRoom" />
     <item android:id="@+id/go_to_mgrs"
         android:icon="@drawable/ic_action_place"
         android:title="@string/go_to_mgrs"
@@ -16,6 +12,32 @@
     <item android:id="@+id/consultar_coordenada"
         android:icon="@drawable/ic_menu_myplaces"
         android:title="@string/consultar_coordenadas"
+        squadleader:showAsAction="ifRoom" />
+    
+    <item android:id="@+id/medir_distancias"
+        android:icon="@drawable/i_measure"
+        android:title="@string/medir_distancias"
+        squadleader:showAsAction="ifRoom" />
+    <item android:id="@+id/medir_areas"
+        android:icon="@drawable/measureareatool32"
+        android:title="@string/medir_areas"
+        squadleader:showAsAction="ifRoom" />
+    <item android:id="@+id/consultar"
+        android:icon="@drawable/i_info"
+        android:title="@string/consultar"
+        squadleader:showAsAction="ifRoom" />
+    <item android:id="@+id/buscar_cercanos"
+        android:icon="@drawable/i_search"
+        android:title="@string/buscar_cercanos"
+        squadleader:showAsAction="ifRoom" />
+    <item android:id="@+id/imprimir"
+        android:icon="@drawable/i_print"
+        android:title="@string/previsualizacion"
+        squadleader:showAsAction="ifRoom" />
+    
+    <item android:id="@+id/add_layer_from_web"
+        android:icon="@drawable/ic_add_content"
+        android:title="@string/add_layer_from_web"
         squadleader:showAsAction="ifRoom" />
     <item android:id="@+id/set_location_mode" android:title="@string/set_location_mode" />
     <item android:id="@+id/settings" android:title="@string/settings" />

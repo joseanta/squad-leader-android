@@ -43,6 +43,7 @@ import android.os.Message;
 import android.util.Log;
 //import android.widget.Toast;
 
+import com.esri.android.map.FeatureLayer;
 import com.esri.android.map.GraphicsLayer;
 import com.esri.android.map.Grid.GridType;
 import com.esri.android.map.Layer;
@@ -57,18 +58,25 @@ import com.esri.android.map.event.OnSingleTapListener;
 import com.esri.android.map.event.OnStatusChangedListener;
 import com.esri.core.geometry.CoordinateConversion;
 import com.esri.core.geometry.CoordinateConversion.MGRSConversionMode;
+import com.esri.core.geometry.Unit.UnitType;
 import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
+import com.esri.core.geometry.LinearUnit;
 import com.esri.core.geometry.MultiPath;
+import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.Polyline;
+import com.esri.core.geometry.Unit;
 //import com.esri.core.geometry.MultiPath;
 import com.esri.core.geometry.Point;
 //import com.esri.core.geometry.Polygon;
 //import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
 import com.esri.core.map.Graphic;
+import com.esri.core.symbol.SimpleFillSymbol;
 import com.esri.core.symbol.SimpleLineSymbol;
+import com.esri.core.symbol.SimpleMarkerSymbol;
+import com.esri.core.symbol.SimpleMarkerSymbol.STYLE;
 //import com.esri.core.symbol.Symbol;
 import com.esri.militaryapps.controller.LocationController.LocationMode;
 import com.esri.militaryapps.model.BasemapLayerInfo;
@@ -124,12 +132,12 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
 
     private static final String TAG = MapController.class.getSimpleName();
 
-    private final MapView mapView;
+    public final MapView mapView;
     private final AssetManager assetManager;
     private final OnStatusChangedListener layerListener;
     private final List<BasemapLayer> basemapLayers = new ArrayList<BasemapLayer>();
     private final List<Layer> nonBasemapLayers = new ArrayList<Layer>();
-    private final GraphicsLayer locationGraphicsLayer = new GraphicsLayer();
+    public final GraphicsLayer locationGraphicsLayer = new GraphicsLayer();
     private final LocationChangeHandler locationChangeHandler = new LocationChangeHandler(this);
     private final Object lastLocationLock = new Object(); 
     private AdvancedSymbolController advancedSymbolController = null;
@@ -141,6 +149,9 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
 	private double dimensionLong = 1000;
 	private double dimensionLat = 1000;
 	private GraphicsLayer dimensionGraphicsLayer = new GraphicsLayer();
+	public boolean autoRotacion = true;
+	public GraphicsLayer bufferGraphicLayer = new GraphicsLayer();
+	public GraphicsLayer ptosDentroBufferGraphicLayer = new GraphicsLayer();
 
     /**
      * Creates a new MapController.
@@ -264,22 +275,55 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
                 
                 mapConfig = new MapConfig();
                 
-                //LayerInfo layer = new LayerInfo(); 
                 String currentLayerThumbnail = "ic_basemap_normal";
+                //layer.setDatasetPath("/storage/sdcard0/SquadLeader/data/Topographic.tpk");                
                 
-                LayerInfo layer = new BasemapLayerInfo(currentLayerThumbnail);                
-                //layer.setDatasetPath("/storage/sdcard0/SquadLeader/data/Topographic.tpk");
+                LayerInfo layer1 = new BasemapLayerInfo(currentLayerThumbnail);                
                 //Para el Phone:
-                //layer.setDatasetPath("/storage/sdcard0/SquadLeader/data/Escenario2_ORTO5k.tpk");
+                //layer1.setDatasetPath("/storage/sdcard0/SquadLeader/data/escenario2_ORTO_cptSevillano.tpk");                
+                //layer1.setDatasetPath("/storage/sdcard0/SquadLeader/data/Vectorial.tpk");                
                 //Para la Tablet
-                layer.setDatasetPath("file:///mnt/sdcard/SquadLeader/data/Escenario2_ORTO5k.tpk");
-                layer.setLayerType(LayerType.TILED_CACHE);
-                layer.setName("Topografico");
-                layer.setVisible(true);
+                //layer1.setDatasetPath("file:///mnt/sdcard/SquadLeader/data/escenario2_ORTO_cptSevillano.tpk");                
+                layer1.setDatasetPath("file:///mnt/sdcard/SquadLeader/data/Vectorial.tpk");                
+                layer1.setLayerType(LayerType.TILED_CACHE);
+                layer1.setName("Orto_capt_Sevillano");
+                layer1.setVisible(false);
+
+                LayerInfo layer2 = new BasemapLayerInfo(currentLayerThumbnail);                
+                //Para el Phone:
+                //layer2.setDatasetPath("/storage/sdcard0/SquadLeader/data/Escenario2_ORTO5k.2.tpk");                
+                //layer2.setDatasetPath("/storage/sdcard0/SquadLeader/data/Raster.tpk");                
+                //Para la Tablet
+                //layer2.setDatasetPath("file:///mnt/sdcard/SquadLeader/data/Escenario2_ORTO5k.2.tpk");                
+                layer2.setDatasetPath("file:///mnt/sdcard/SquadLeader/data/Raster.tpk");                
+                layer2.setLayerType(LayerType.TILED_CACHE);
+                layer2.setName("Orto");
+                layer2.setVisible(true);
+
+                /*//LayerInfo layer3 = new BasemapLayerInfo(currentLayerThumbnail);                
+                //Para el Phone:
+                //layer3.setDatasetPath("/storage/sdcard0/SquadLeader/data/Escenario2_Simbolizado25K.tpk");                
+                //Para la Tablet
+                layer3.setDatasetPath("file:///mnt/sdcard/SquadLeader/data/Escenario2_Simbolizado25K.tpk");                
+                layer3.setLayerType(LayerType.TILED_CACHE);
+                layer3.setName("Vector");
+                layer3.setVisible(false);
+
+               // LayerInfo layer4 = new BasemapLayerInfo(currentLayerThumbnail);                
+                //Para el Phone:
+                //layer4.setDatasetPath("/storage/sdcard0/SquadLeader/data/Escenario2_vector_orto.tpk");                
+                //Para la Tablet
+                layer4.setDatasetPath("file:///mnt/sdcard/SquadLeader/data/Escenario2_vector_orto.tpk");                
+                layer4.setLayerType(LayerType.TILED_CACHE);
+                layer4.setName("Vector_Orto");
+                layer4.setVisible(false);*/
 
                 	
-                BasemapLayerInfo[] basemapLayers = new BasemapLayerInfo[1];
-                basemapLayers[0]=(BasemapLayerInfo) layer;
+                BasemapLayerInfo[] basemapLayers = new BasemapLayerInfo[2];
+                basemapLayers[0]=(BasemapLayerInfo) layer1;
+                basemapLayers[1]=(BasemapLayerInfo) layer2;
+                //basemapLayers[2]=(BasemapLayerInfo) layer3;
+                //basemapLayers[3]=(BasemapLayerInfo) layer4;
                 mapConfig.setBasemapLayers(basemapLayers);	
                 //List<BasemapLayerInfo> basemaps = new ArrayList<BasemapLayerInfo>();
                 //basemaps.add((BasemapLayerInfo) layer);
@@ -316,8 +360,14 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
             }
         }            
         
-        addLayer(locationGraphicsLayer, true);
-        addLayer(dimensionGraphicsLayer,true);
+        locationGraphicsLayer.setName("LayerGPS");
+        	addLayer(locationGraphicsLayer, true);
+        dimensionGraphicsLayer.setName("LayerDimension");
+        	addLayer(dimensionGraphicsLayer,true);
+        bufferGraphicLayer.setName("LayerBuffer");
+        	addLayer(bufferGraphicLayer, true);
+        ptosDentroBufferGraphicLayer.setName("LayerPtosdentroBuffer");
+        	addLayer(ptosDentroBufferGraphicLayer, true);
     }
     
     /**
@@ -581,6 +631,15 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
         panTo(new Point(centerX, centerY));
     }
     
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////   Modificacionew Realizadas					   //////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////   Para Dimensiones, para rotacion automatica, para buscar por buffer  ///////////////////
+    
     private void BorrarDimensionPantalla(){
     	dimensionGraphicsLayer.removeAll();
     }
@@ -608,13 +667,13 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
     }
 	public void panTo(Point newCenter) {
         mapView.centerAt(newCenter, true);
-        setRotation(rumbo);
+        if (autoRotacion)
+        	setRotation(rumbo);
         if (dibujarDimensionPantalla){
         	BorrarDimensionPantalla();
         	DibujarDimensionPantalla(newCenter);
         }
     }
-
 	public void DibujarDimension(boolean dibujar){
 		dibujarDimensionPantalla = dibujar;
 		BorrarDimensionPantalla();
@@ -644,6 +703,68 @@ public class MapController extends com.esri.militaryapps.controller.MapControlle
     	}    	
     	
     }
+    public void BuscarElementos(Point punto, Double distancia){
+    	
+		Unit unit = mapView.getSpatialReference().getUnit();
+		if (unit.getUnitType() == UnitType.ANGULAR) {
+			distancia = metersToDegrees(distancia);
+		} else {
+			unit = Unit.create(LinearUnit.Code.METER);
+		}
+    	
+		Polygon pol = GeometryEngine.buffer((Geometry) punto, mapView.getSpatialReference(), distancia, unit);
+		
+		// Render the polygon on the result graphic layer
+		bufferGraphicLayer.removeAll();
+		SimpleFillSymbol sfs = new SimpleFillSymbol(Color.GREEN);
+		sfs.setOutline(new SimpleLineSymbol(Color.RED, 4, com.esri.core.symbol.SimpleLineSymbol.STYLE.SOLID));
+		sfs.setAlpha(25);
+		Graphic g = new Graphic(pol, sfs);
+		bufferGraphicLayer.addGraphic(g);
+		
+		ptosDentroBufferGraphicLayer.removeAll();
+		Layer[] layers = mapView.getLayers();
+		GraphicsLayer spotReportLayerInt = null;
+		for (Layer layer : layers) {
+			if (!(layer instanceof FeatureLayer) &&(layer instanceof GraphicsLayer))
+			{
+				if (layer.getName()== "spotReportLayer")
+					spotReportLayerInt = (GraphicsLayer) layer;			
+			}		}
+		if (spotReportLayerInt == null)
+			return;
+		
+		int[] identificadores = spotReportLayerInt.getGraphicIDs();
+		Graphic graphic = null;
+		Graphic graphicNew = null;
+		for (int i : identificadores) {
+			graphic = spotReportLayerInt.getGraphic(i);
+			if (graphic == null)
+				continue;
+			if (GeometryEngine.contains(pol,  graphic.getGeometry(), mapView.getSpatialReference())){
+				graphicNew = new Graphic(graphic.getGeometry(), new SimpleMarkerSymbol(Color.BLACK, 25, STYLE.DIAMOND));
+				ptosDentroBufferGraphicLayer.addGraphic(graphicNew);
+			}
+		}
+
+    	
+    }
+    
+	private final double metersToDegrees(double distanceInMeters) {
+		return distanceInMeters / 111319.5;
+		// lo pispo que
+		//dimensionLat = (dimensionLat * 360.0) / (2.0 * Math.PI * R);
+	}
+ 
+	////////////////////   F I N      Modificacionew Realizadas		       //////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    
+    
     /**
      * Pans the map to a new center point, if a valid MGRS string is provided.
      * @param newCenterMgrs the map's new center point, as an MGRS string.

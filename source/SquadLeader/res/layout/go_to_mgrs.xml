@@ -33,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:text="42S XD 31146 11887        Latitud Longitud        42S 631409 3811849"
+        android:text="42S XD 31146 11887        Longitud  Latitud         42S 631409 3811849"
         android:textSize="10sp" />
 
     <EditText

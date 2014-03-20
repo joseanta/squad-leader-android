@@ -3,6 +3,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     tools:context=".SquadLeaderActivity"
+    android:id="@+id/relative_layout_main"
     >
     <com.esri.android.map.MapView
         android:id="@+id/map"
@@ -97,6 +98,58 @@
             android:onClick="toggleButton_chemLightBlue_clicked"/>
     </RadioGroup>
 
+    <TableLayout
+        android:id="@+id/tableLayout_medir"
+        android:layout_width="252dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="3dp"
+        android:layout_marginTop="5dp"
+        android:layout_toLeftOf="@+id/toggleButton_status911"
+        android:background="@drawable/location_display_background"
+        android:visibility="invisible" >
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_weight=".5">
+
+        	<Spinner
+        	    android:id="@+id/spinner1"
+        	    android:layout_height="40dp"
+        	    android:layout_margin="3dp"
+        	    android:layout_weight="0.7"
+        	    android:entries="@array/DistanceUnits"
+        	    android:textColor="#4D4D4D" />
+
+	        <LinearLayout
+	            android:layout_height="fill_parent"
+	            android:layout_weight="0.3"
+	            android:orientation="vertical" >
+
+		        <TextView
+		            android:id="@+id/result"
+		            android:layout_width="fill_parent"
+		            android:layout_height="wrap_content"
+		            android:layout_marginLeft="5dp"
+		            android:layout_gravity="center"
+		            android:text="1000.00"
+		            android:textColor="#4D4D4D" />
+
+		        <Button
+		            android:id="@+id/reset"
+		            android:layout_width="fill_parent"
+		            android:layout_height="wrap_content"
+		            android:layout_marginRight="5dp"
+		            android:textSize="14dp"
+		            android:text="reset"
+		            android:paddingTop="-2dp"
+		            android:textColor="#4D4D4D" />
+	         </LinearLayout>
+        </TableRow>        
+    </TableLayout>
+    
+    
+    
+    
     <ToggleButton
         android:id="@+id/toggleButton_grid"
         android:layout_width="50dp"
@@ -114,21 +167,21 @@
         android:id="@+id/northArrowView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
         android:layout_above="@+id/imageButton_zoomIn"
-        android:src="@drawable/ic_north_arrow"
+        android:layout_alignParentRight="true"
         android:contentDescription="@string/north_arrow_desc"
-        android:onClick="northArrowView_clicked"/>
+        android:onClick="northArrowView_clicked"
+        android:src="@drawable/ic_north_arrow" />
 
     <ImageButton
         android:id="@+id/imageButton_zoomIn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignRight="@+id/imageButton_zoomOut"
         android:layout_above="@+id/imageButton_zoomOut"
+        android:layout_alignRight="@+id/imageButton_zoomOut"
         android:background="@drawable/selector_zoom_in"
         android:contentDescription="@string/zoom_in"
-        android:onClick="imageButton_zoomIn_clicked"/>
+        android:onClick="imageButton_zoomIn_clicked" />
 
     <ImageButton
         android:id="@+id/imageButton_zoomOut"
@@ -145,13 +198,13 @@
         android:id="@+id/toggleButton_followMe"
         android:layout_width="50dp"
         android:layout_height="wrap_content"
-        android:layout_toLeftOf="@+id/imageButton_zoomOut"
         android:layout_alignBottom="@+id/toggleButton_grid"
+        android:layout_toLeftOf="@+id/imageButton_zoomOut"
         android:background="@drawable/selector_follow_me"
-        android:textOn=""
-        android:textOff=""
         android:contentDescription="@string/follow_me"
-        android:onClick="toggleButton_followMe_clicked"/>
+        android:onClick="toggleButton_followMe_clicked"
+        android:textOff=""
+        android:textOn="" />
     
     <TableLayout
         android:id="@+id/tableLayout_display"
